@@ -1,8 +1,5 @@
-import http from 'http';
+import express from 'express';
+const app = express();
 
-http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('Bot is alive!');
-}).listen(process.env.PORT || 3000);
-
-console.log('Keep-alive server running...');
+app.get('/', (req, res) => res.send('Bot is alive'));
+app.listen(3000, () => console.log('🌐 Keep-alive server running'));
