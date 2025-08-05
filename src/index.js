@@ -1,3 +1,4 @@
+// src/index.js
 import { Client, GatewayIntentBits, Collection } from 'discord.js';
 import { config } from 'dotenv';
 import fs from 'fs';
@@ -49,7 +50,7 @@ async function main() {
   });
 
   await connectToMongo();
-  client.login(process.env.BOT_TOKEN);
+  await client.login(process.env.DISCORD_TOKEN); // ✅ FIXED HERE
 }
 
 main().catch(err => {
