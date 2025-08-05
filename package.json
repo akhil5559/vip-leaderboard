@@ -7,9 +7,6 @@
   "scripts": {
     "start": "node keep_alive.js && node src/index.js"
   },
-  "keywords": [],
-  "author": "YourName",
-  "license": "MIT",
   "dependencies": {
     "discord.js": "^14.13.0",
     "mongoose": "^8.3.4",
