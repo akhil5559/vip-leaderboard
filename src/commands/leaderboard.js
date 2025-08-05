@@ -1,4 +1,10 @@
-import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
+} from 'discord.js';
 import { getLeaderboardEmbed } from '../utils/embedBuilder.js';
 import { getPaginatedPlayers } from '../utils/paginator.js';
 
@@ -18,30 +24,49 @@ export default {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply();
+    try {
+      await interaction.deferReply();
 
-    const title = interaction.options.getString('name') || '🏆 Trophy Leaderboard';
-    const color = interaction.options.getString('color') || '#0099ff';
+      const title = interaction.options.getString('name') || '🏆 Trophy Leaderboard';
+      const color = interaction.options.getString('color') || '#0099ff';
 
-    const page = 0;
-    const { players, totalPages } = await getPaginatedPlayers(page);
-    const embed = getLeaderboardEmbed(players, title, color, page, totalPages);
+      const page = 0;
+      const { players, totalPages } = await getPaginatedPlayers(page);
 
-    const buttons = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`prev_page_${page}`)
-        .setLabel('◀ Previous')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('refresh_leaderboard')
-        .setLabel('🔄 Refresh')
-        .setStyle(ButtonStyle.Success),
-      new ButtonBuilder()
-        .setCustomId(`next_page_${page}`)
-        .setLabel('Next ▶')
-        .setStyle(ButtonStyle.Primary)
-    );
+      if (!players || players.length === 0) {
+        return await interaction.editReply({
+          content: '❌ No players found in the leaderboard.',
+          ephemeral: true
+        });
+      }
 
-    await interaction.editReply({ embeds: [embed], components: [buttons] });
+      const embed = getLeaderboardEmbed(players, title, color, page, totalPages);
+
+      const buttons = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`leaderboard_prev_${page}`)
+          .setLabel('◀ Previous')
+          .setStyle(ButtonStyle.Primary)
+          .setDisabled(true), // first page = disable prev
+        new ButtonBuilder()
+          .setCustomId('leaderboard_refresh')
+          .setLabel('🔄 Refresh')
+          .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+          .setCustomId(`leaderboard_next_${page}`)
+          .setLabel('Next ▶')
+          .setStyle(ButtonStyle.Primary)
+          .setDisabled(page >= totalPages - 1)
+      );
+
+      await interaction.editReply({ embeds: [embed], components: [buttons] });
+    } catch (err) {
+      console.error('❌ Command error:', err);
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ content: 'An error occurred while fetching leaderboard.' });
+      } else {
+        await interaction.reply({ content: 'An error occurred.', ephemeral: true });
+      }
+    }
   }
 };
