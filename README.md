@@ -1,29 +1,17 @@
 # Vip-leaderboard Bot
 
-Clash of Clans Discord bot to track and display a trophy-based leaderboard for your server.
+🏆 Discord bot for Clash of Clans leaderboard based on trophies, with live updates, MongoDB integration, and scheduled jobs.
 
 ## Features
+- Trophy leaderboard with custom emojis
+- /link, /unlink, /remove commands
+- Daily offense/defense update (10:30 AM IST)
+- Refresh leaderboard using button
+- MongoDB data storage and backup
+- Deployed on Render with uptime using keep_alive.js
 
-- Trophy leaderboard with offense/defense stats
-- Link/unlink/remove CoC accounts
-- Daily backup
-- Auto-refresh player stats from proxy API
-- Cool UI with buttons (refresh/next/prev)
-- Stable & responsive (Render + UptimeRobot)
-
-## Tech Stack
-
-- Node.js + Discord.js v14
-- MongoDB (with existing data)
-- Render hosting
-- Slash commands
-
-## Setup
-
-1. Clone the repo
-2. Set environment variables in Render:
-   - `BOT_TOKEN`
-   - `MONGO_URI`
-   - `CLASH_API_PROXY` (e.g., https://your-proxy/players/%23{tag})
-3. Deploy to Render + ping with UptimeRobot
-4. Enjoy!
+## Technologies
+- Node.js
+- Discord.js v14
+- MongoDB (with Mongoose)
+- Render (Free hosting)
