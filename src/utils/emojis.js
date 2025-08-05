@@ -1,0 +1,3 @@
+export const EMOJI_TROPHY = '<:trophy:1400826511799484476>';
+export const EMOJI_OFFENSE = '<:Offence:1400826628099014676>';
+export const EMOJI_DEFENSE = '<:emoji_9:1252010455694835743>';
