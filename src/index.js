@@ -1,59 +1,54 @@
-import { Client, GatewayIntentBits, Collection, REST, Routes } from 'discord.js';
+import { Client, GatewayIntentBits, Collection } from 'discord.js';
+import { config } from 'dotenv';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { connectToMongo } from './services/mongo.js';
-import './jobs/refreshPlayers.js';
-import './jobs/dailyReset.js';
+import { scheduleDailyReset, scheduleRefreshJob } from './jobs/dailyReset.js';
+import './keep_alive.js';
+
+config();
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [GatewayIntentBits.Guilds]
 });
 
 client.commands = new Collection();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load commands
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-const slashCommands = [];
-
+// Load all commands dynamically
+const commandFiles = fs.readdirSync('./src/commands').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const command = (await import(`./commands/${file}`)).default;
-  if ('data' in command && 'execute' in command) {
-    client.commands.set(command.data.name, command);
-    slashCommands.push(command.data.toJSON());
-  }
+  const command = await import(`./commands/${file}`);
+  client.commands.set(command.default.data.name, command.default);
 }
 
-// Register slash commands
-const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
-rest.put(
-  Routes.applicationCommands(process.env.CLIENT_ID),
-  { body: slashCommands },
-).then(() => console.log('✅ Slash commands registered.'));
-
-// Event: Interaction
+// On interaction
 client.on('interactionCreate', async interaction => {
-  if (!interaction.isChatInputCommand()) return;
-  const command = client.commands.get(interaction.commandName);
-  if (!command) return;
+  if (!interaction.isChatInputCommand() && !interaction.isButton()) return;
+
   try {
-    await command.execute(interaction);
-  } catch (error) {
-    console.error(error);
-    await interaction.reply({ content: '❌ Error executing command.', ephemeral: true });
+    if (interaction.isChatInputCommand()) {
+      const command = client.commands.get(interaction.commandName);
+      if (command) await command.execute(interaction);
+    } else {
+      const handler = await import('./commands/leaderboard.js');
+      await handler.handleButton(interaction);
+    }
+  } catch (err) {
+    console.error('❌ Command error:', err);
+    if (interaction.replied || interaction.deferred) {
+      interaction.editReply({ content: 'An error occurred.' });
+    } else {
+      interaction.reply({ content: 'An error occurred.', ephemeral: true });
+    }
   }
 });
 
-// Start
+// Start bot
 client.once('ready', () => {
-  console.log(`✅ Logged in as ${client.user.tag}`);
+  console.log(`🤖 Logged in as ${client.user.tag}`);
+  scheduleRefreshJob();
+  scheduleDailyReset();
 });
 
-connectToMongo().then(() => {
-  client.login(process.env.BOT_TOKEN);
-});
+await connectToMongo();
+client.login(process.env.BOT_TOKEN);
