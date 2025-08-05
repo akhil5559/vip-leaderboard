@@ -20,4 +20,4 @@ app.listen(port, () => {
 });
 
 // 👇 This is the critical line that actually starts your bot:
-import './index.js';
+import './src/index.js'; // ✅ Corrected path
