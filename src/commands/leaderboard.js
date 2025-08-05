@@ -71,7 +71,7 @@ export default {
   }
 };
 
-// 👇 ADD THIS to support button interactions
+// 🔘 Handles button interactions like next/prev/refresh
 export async function handleButton(interaction) {
   if (!interaction.isButton()) return;
 
@@ -83,9 +83,17 @@ export async function handleButton(interaction) {
 
     if (action === 'next') page++;
     else if (action === 'prev') page--;
-    else if (action === 'refresh') page = page; // stay on same page
+    else if (action === 'refresh') page = page; // keep same page
 
     const { players, totalPages } = await getPaginatedPlayers(page);
+
+    if (!players || players.length === 0) {
+      return await interaction.update({
+        content: '❌ No players found.',
+        components: [],
+        embeds: []
+      });
+    }
 
     const embed = getLeaderboardEmbed(
       players,
@@ -125,4 +133,4 @@ export async function handleButton(interaction) {
       await interaction.editReply({ content: 'An error occurred.' });
     }
   }
-        }
+    }
