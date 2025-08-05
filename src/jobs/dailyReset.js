@@ -1,4 +1,4 @@
-import cron from 'cron';
+import cron from 'node-cron';
 import Player from '../services/mongo.js';
 import { createBackup } from '../services/backup.js';
 import { logInfo } from '../services/logger.js';
