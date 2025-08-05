@@ -47,9 +47,9 @@ export default {
           .setCustomId(`leaderboard_prev_${page}`)
           .setLabel('◀ Previous')
           .setStyle(ButtonStyle.Primary)
-          .setDisabled(true), // first page = disable prev
+          .setDisabled(true),
         new ButtonBuilder()
-          .setCustomId('leaderboard_refresh')
+          .setCustomId(`leaderboard_refresh_${page}`)
           .setLabel('🔄 Refresh')
           .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
@@ -70,3 +70,59 @@ export default {
     }
   }
 };
+
+// 👇 ADD THIS to support button interactions
+export async function handleButton(interaction) {
+  if (!interaction.isButton()) return;
+
+  try {
+    const [prefix, action, pageStr] = interaction.customId.split('_');
+    if (prefix !== 'leaderboard') return;
+
+    let page = parseInt(pageStr) || 0;
+
+    if (action === 'next') page++;
+    else if (action === 'prev') page--;
+    else if (action === 'refresh') page = page; // stay on same page
+
+    const { players, totalPages } = await getPaginatedPlayers(page);
+
+    const embed = getLeaderboardEmbed(
+      players,
+      '🏆 Trophy Leaderboard',
+      '#0099ff',
+      page,
+      totalPages
+    );
+
+    const buttons = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`leaderboard_prev_${page}`)
+        .setLabel('◀ Previous')
+        .setStyle(ButtonStyle.Primary)
+        .setDisabled(page <= 0),
+      new ButtonBuilder()
+        .setCustomId(`leaderboard_refresh_${page}`)
+        .setLabel('🔄 Refresh')
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId(`leaderboard_next_${page}`)
+        .setLabel('Next ▶')
+        .setStyle(ButtonStyle.Primary)
+        .setDisabled(page >= totalPages - 1)
+    );
+
+    await interaction.update({
+      embeds: [embed],
+      components: [buttons]
+    });
+
+  } catch (err) {
+    console.error('❌ Button interaction error:', err);
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ content: 'An error occurred.', ephemeral: true });
+    } else {
+      await interaction.editReply({ content: 'An error occurred.' });
+    }
+  }
+        }
