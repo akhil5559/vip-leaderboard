@@ -1,3 +1,5 @@
+// src/commands/leaderboard.js
+
 import {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -30,8 +32,12 @@ export default {
       const title = interaction.options.getString('name') || '🏆 Trophy Leaderboard';
       const color = interaction.options.getString('color') || '#0099ff';
 
-      const page = 0;
-      const { players, totalPages } = await getPaginatedPlayers(page);
+      // 👇 Replace this line
+      // const { players, totalPages } = await getPaginatedPlayers(page);
+      // 👇 With this corrected version
+      const allPlayers = await getPlayersFromDB(); // you must implement this in your DB service
+      const page = 1;
+      const { data: players, totalPages } = getPaginatedPlayers(allPlayers, page);
 
       if (!players || players.length === 0) {
         return await interaction.editReply({
@@ -56,22 +62,19 @@ export default {
           .setCustomId(`leaderboard_next_${page}`)
           .setLabel('Next ▶')
           .setStyle(ButtonStyle.Primary)
-          .setDisabled(page >= totalPages - 1)
+          .setDisabled(page >= totalPages)
       );
 
       await interaction.editReply({ embeds: [embed], components: [buttons] });
+
     } catch (err) {
       console.error('❌ Command error:', err);
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ content: 'An error occurred while fetching leaderboard.' });
-      } else {
-        await interaction.reply({ content: 'An error occurred.', ephemeral: true });
-      }
+      await interaction.editReply({ content: 'An error occurred while fetching leaderboard.' });
     }
   }
 };
 
-// 🔘 Handles button interactions like next/prev/refresh
+// 👇 Button Interaction Handler
 export async function handleButton(interaction) {
   if (!interaction.isButton()) return;
 
@@ -79,13 +82,15 @@ export async function handleButton(interaction) {
     const [prefix, action, pageStr] = interaction.customId.split('_');
     if (prefix !== 'leaderboard') return;
 
-    let page = parseInt(pageStr) || 0;
+    let page = parseInt(pageStr);
+    if (isNaN(page)) page = 1;
 
     if (action === 'next') page++;
     else if (action === 'prev') page--;
-    else if (action === 'refresh') page = page; // keep same page
+    // refresh keeps same page
 
-    const { players, totalPages } = await getPaginatedPlayers(page);
+    const allPlayers = await getPlayersFromDB(); // again, replace with your actual DB call
+    const { data: players, totalPages } = getPaginatedPlayers(allPlayers, page);
 
     if (!players || players.length === 0) {
       return await interaction.update({
@@ -95,20 +100,14 @@ export async function handleButton(interaction) {
       });
     }
 
-    const embed = getLeaderboardEmbed(
-      players,
-      '🏆 Trophy Leaderboard',
-      '#0099ff',
-      page,
-      totalPages
-    );
+    const embed = getLeaderboardEmbed(players, '🏆 Trophy Leaderboard', '#0099ff', page, totalPages);
 
     const buttons = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`leaderboard_prev_${page}`)
         .setLabel('◀ Previous')
         .setStyle(ButtonStyle.Primary)
-        .setDisabled(page <= 0),
+        .setDisabled(page <= 1),
       new ButtonBuilder()
         .setCustomId(`leaderboard_refresh_${page}`)
         .setLabel('🔄 Refresh')
@@ -117,20 +116,13 @@ export async function handleButton(interaction) {
         .setCustomId(`leaderboard_next_${page}`)
         .setLabel('Next ▶')
         .setStyle(ButtonStyle.Primary)
-        .setDisabled(page >= totalPages - 1)
+        .setDisabled(page >= totalPages)
     );
 
-    await interaction.update({
-      embeds: [embed],
-      components: [buttons]
-    });
+    await interaction.update({ embeds: [embed], components: [buttons] });
 
   } catch (err) {
     console.error('❌ Button interaction error:', err);
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ content: 'An error occurred.', ephemeral: true });
-    } else {
-      await interaction.editReply({ content: 'An error occurred.' });
-    }
+    await interaction.reply({ content: 'An error occurred while handling the button.', ephemeral: true });
   }
-    }
+}
