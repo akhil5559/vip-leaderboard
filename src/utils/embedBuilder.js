@@ -1,27 +1,22 @@
-import { EmbedBuilder } from 'discord.js';
-import { EMOJI_TROPHY, EMOJI_OFFENSE, EMOJI_DEFENSE } from './emojis.js';
+export function getLeaderboardEmbed(players, page, totalPages, name = 'Leaderboard', color = '#FFD700') {
+  const start = (page - 1) * 10;
+  const pagePlayers = players.slice(start, start + 10);
 
-export function buildLeaderboardEmbed(players, page = 0, name = 'Leaderboard', color = '#FFD700') {
-  const pageSize = 10;
-  const totalPages = Math.ceil(players.length / pageSize);
-  const pagedPlayers = players.slice(page * pageSize, (page + 1) * pageSize);
+  const fields = pagePlayers.map((p, i) => {
+    const rank = start + i + 1;
+    return {
+      name: `${rank}. ${p.name} (${p.player_tag})`,
+      value: `<:trophy:1400826511799484476> ${p.trophies} | <:Offence:1400826628099014676> +${p.offense_trophies}/${p.offense_attacks ?? 0} | <:emoji_9:1252010455694835743> ${p.defense_trophies}/${p.defense_defenses ?? 0}`,
+      inline: false
+    };
+  });
 
-  const description = pagedPlayers.map((p, i) => {
-    const rank = page * pageSize + i + 1;
-    const offense = `+${p.offense_trophies}/${p.offense_attacks}`;
-    const defense = `-${p.defense_trophies}/${p.defense_defenses}`;
-
-    return `**${rank}. ${p.name} (#${p.player_tag})**\n` +
-           `${EMOJI_TROPHY} ${p.trophies} | ${EMOJI_OFFENSE} ${offense} | ${EMOJI_DEFENSE} ${defense}`;
-  }).join('\n\n');
-
-  const embed = new EmbedBuilder()
-    .setTitle(name)
-    .setDescription(description || 'No players found.')
-    .setColor(color)
-    .setFooter({ text: `Last refreshed: ${new Date().toLocaleString('en-IN', {
-      hour12: true, timeZone: 'Asia/Kolkata'
-    })}` });
-
-  return embed;
+  return {
+    title: name,
+    color,
+    fields,
+    footer: {
+      text: `Page ${page} of ${totalPages} • Last refreshed: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`
+    }
+  };
 }
