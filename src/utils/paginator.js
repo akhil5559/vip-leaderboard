@@ -1,24 +1,30 @@
 // src/utils/paginator.js
 
+import Player from '../models/playerModel.js'; // Adjust path if needed
+
 /**
- * Paginate the players array for leaderboard display.
+ * Fetch paginated players from MongoDB for leaderboard.
  *
- * @param {Array} players - The full array of player objects.
- * @param {number} page - The current page number (1-based).
+ * @param {number} page - The current page number (0-based).
  * @param {number} pageSize - Number of items per page.
  * @returns {Object} Contains the paginated data and pagination metadata.
  */
-export function getPaginatedPlayers(players, page = 1, pageSize = 10) {
-  const startIndex = (page - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
+export async function getPaginatedPlayers(page = 0, pageSize = 10) {
+  const skip = page * pageSize;
 
-  const paginated = players.slice(startIndex, endIndex);
+  const players = await Player.find()
+    .sort({ trophies: -1 })
+    .skip(skip)
+    .limit(pageSize);
+
+  const totalCount = await Player.countDocuments();
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return {
-    data: paginated,
-    totalPages: Math.ceil(players.length / pageSize),
+    players,
+    totalPages,
     currentPage: page,
-    hasNextPage: endIndex < players.length,
-    hasPreviousPage: startIndex > 0
+    hasNextPage: page < totalPages - 1,
+    hasPreviousPage: page > 0
   };
 }
