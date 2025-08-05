@@ -1,14 +1,19 @@
-// src/services/clash.js
-import fetch from 'node-fetch';
-
-const BASE_URL = 'https://clash-of-clans-api-4bi0.onrender.com';
-
 export async function fetchPlayerData(tag) {
   try {
-    const encodedTag = encodeURIComponent(tag);
-    const res = await fetch(`${BASE_URL}/player/${encodedTag}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
+    const encodedTag = encodeURIComponent(tag.startsWith('#') ? tag : `#${tag}`);
+    const url = `https://clash-of-clans-api-4bi0.onrender.com/player/${encodedTag}`;
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(`❌ Failed to fetch data for ${tag}: ${res.status}`);
+      return null;
+    }
+
+    const data = await res.json();
+    return {
+      name: data.name,
+      trophies: data.trophies
+    };
   } catch (err) {
     console.error(`❌ Error fetching data for ${tag}:`, err);
     return null;
