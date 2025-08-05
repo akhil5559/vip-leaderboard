@@ -1,16 +1,22 @@
 {
   "name": "vip-leaderboard",
-  "type": "module",
   "version": "1.0.0",
-  "main": "src/index.js",
+  "description": "Clash of Clans leaderboard Discord bot",
+  "main": "keep_alive.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node keep_alive.js"
   },
   "dependencies": {
-    "discord.js": "^14.11.0",
+    "axios": "^1.6.8",
+    "discord.js": "^14.13.0",
     "dotenv": "^16.3.1",
-    "express": "^4.19.2",
-    "mongoose": "^8.0.1",
+    "mongoose": "^8.4.1",
+    "node-cron": "^3.0.3",
     "node-fetch": "^3.4.1"
   }
 }
